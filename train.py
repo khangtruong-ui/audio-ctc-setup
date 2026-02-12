@@ -120,7 +120,7 @@ torch_loader = DataLoader(
     batch_size=BATCH_SIZE * jax.local_device_count(),
     sampler=torch_sampler,
     drop_last=True,
-    num_workers=0
+    num_workers=os.cpu_count() // 2
 )
 
 print('CREATE LOADER')
@@ -172,7 +172,8 @@ model = AudioToText(len(chars))
 opt = optax.adam(learning_rate=1e-4)
 
 print('CREATE VARIABLES')
-variables = model.init(jax.random.key(0), jnp.zeros((4, 129, 1741)))
+inp = distribute_device(jnp.zeros((8, 129, 1741)), sharding)
+variables = model.init(jax.random.key(0), inp)
 opt_state = opt.init(variables['params'])
 print('VARIABLES CREATED')
 
